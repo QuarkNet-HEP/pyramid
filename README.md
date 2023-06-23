@@ -1,6 +1,7 @@
 # pyramid
 Visualization of the cosmic ray data in the Mayan Pyramid Project
 
+**Current progress of event display**
 Install vpython and run 3Dgraphics.ipynb in jupyter notebooks
 To pan the camera around, hit control + drag the mouse
 To zoom the camera, use the scroll wheel or use two fingers on the mousepad

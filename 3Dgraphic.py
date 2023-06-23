@@ -87,7 +87,7 @@ class triShaft():
         quad( vs=[c0,b0,b1,c1])
         curve(pos=[vertexes[2],vertexes[5]],color=self.outline)
     
-class Sensor():
+class _Sensor():
     def __init__(self):
         self.centerx=0
         self.centery=0
@@ -164,7 +164,7 @@ class Sensor():
 
 c.lights = []
 
-s = Sensor()
+s = _Sensor()
 s.xtransparency=1
 s.ytransparency=1
 s.render()

@@ -1,5 +1,6 @@
 from vpython import *
-from DataReading import *
+from DataReadingv3 import *
+
 
 #this is the temporary fix
 c = canvas(width=1000,height=800)
@@ -14,11 +15,12 @@ class triShaft():
         self.zpos = 0
         self.orientation = 'up'
         self.opacity = 0.05
-        self.color = vec(255,255,255)
-        self.outline = vec(255,255,255)
-        self.lineradius = 0.01
-        self.lines = []
-        self.surfaces = []
+        self.color = vector(1,1,1)
+        self.outline = vector(1,1,1)
+        self.lineradius = 0.02
+        self.wireframe = []
+        self.prism = None
+
     #this is just a scene
     def render(self):
 
@@ -91,8 +93,8 @@ class triShaft():
         q3 = quad( vs=[c0,b0,b1,c1])
         l5 = curve(pos=[vertexes[2],vertexes[5]],color=self.outline, radius=self.lineradius)
 
-        self.lines+=[l1,l2,l3,l4,l5]
-        self.surfaces+=[t1,t2,q1,q2,q3]
+        self.wireframe = [l1,l2,l3,l4,l5]
+        self.prism = compound([t1,t2,q1,q2,q3])
     
 class Sensor():
     def __init__(self, data):
@@ -100,15 +102,17 @@ class Sensor():
         self.centery=0
         self.centerz=0
         self.planeSpacing=6
+        self.moduleSpacing=0.1
         self.gridx=28
         self.gridy=48
-        self.xcolor = vec(255,0,0) #red
-        self.ycolor = vec(0,0,255) #blue
+        self.xcolor = vector(1,1,1) 
+        self.ycolor = vector(1,1,1) 
         self.xtransparency = 0.05
         self.ytransparency = 0.05
         self.xstart = 'down'
         self.ystart = 'down'
         self.data = data
+        self.job = []
 
         #lists of triangle shaft objects according to layer and type
         self.shafts = {
@@ -133,74 +137,130 @@ class Sensor():
             ypattern = 1
             if self.ystart == 'down': ypattern = 0
 
-            #upward triangles in the x direction
-            for i in range(self.gridx//2):
+            spacing = 0
+            #triangles in the x direction
+            for i in range(self.gridx):
                 new = triShaft()
-                new.length = self.gridy//2
-                new.xpos = self.centerx-self.gridx/4 + i + new.size/2 * (1-xpattern)
+                if i%2 != xpattern: new.orientation = "up"
+                elif i%2 == xpattern: new.orientation = "down"
+
+                new.length = self.gridy/2 + self.gridy/4 * self.moduleSpacing
+
+                if i>0 and i%4==0: spacing += self.moduleSpacing
+
+                offset = self.centerx-self.gridx/4 + spacing
+                new.xpos = offset + i*new.size/2
+                
                 new.ypos = (1-k)*self.planeSpacing + self.centery
                 new.zpos = self.centerz+self.gridy/4
                 new.color = self.xcolor
                 new.opacity = self.xtransparency
-                new.render()
-                self.shafts[k][new.type]+=[new]
-            #downward triangles in the x direction
-            for i in range(self.gridx//2):
-                new = triShaft()
-                new.length = self.gridy//2
-                new.orientation = "down"
-                new.xpos = self.centerx-self.gridx/4 + i + new.size/2 * xpattern
-                new.ypos = (1-k)*self.planeSpacing + self.centery
-                new.zpos = self.centerz+self.gridy/4
-                new.color = self.xcolor
-                new.opacity = self.xtransparency
-                new.render()
+                self.job+=[new]
                 self.shafts[k][new.type]+=[new]
 
+            spacing = 0
             #upward triangles in the y direction
-            for i in range(self.gridy//2):
+            for i in range(self.gridy):
                 new = triShaft()
                 new.type = 'y'
-                new.length = self.gridx//2 + new.size/2
+
+                if i%2 != ypattern: new.orientation = "up"
+                elif i%2 == ypattern: new.orientation = "down"
+
+                new.length = self.gridx/2 + new.size/2 + self.gridx/4 * self.moduleSpacing - self.moduleSpacing
+
                 new.xpos = self.centerz-self.gridx/4
                 new.ypos = (1-k)*self.planeSpacing + self.centery + new.size/2
-                new.zpos = self.centery-self.gridy/4 + i + new.size * ypattern + new.size
+
+                if i>0 and i%4==0: spacing += self.moduleSpacing
+                offset = self.centery-self.gridy/4 + spacing
+
+                new.zpos = offset + i*new.size/2 - new.size/2
                 new.color = self.ycolor
                 new.opacity = self.ytransparency
-                new.render()
+                self.job+=[new]
                 self.shafts[k][new.type]+=[new]
-            #downward triangles in the y direction
-            for i in range(self.gridy//2):
-                new = triShaft()
-                new.type = 'y'
-                new.orientation = 'down'
-                new.length = self.gridx//2 + new.size/2
-                new.xpos = self.centerz-self.gridx/4
-                new.ypos = (1-k)*self.planeSpacing + self.centery + new.size/2
-                new.zpos = self.centery-self.gridy/4 + i + new.size*1.5
-                new.color = self.ycolor
-                new.opacity = self.ytransparency
-                new.render()
-                self.shafts[k][new.type]+=[new]
+        
+        i = 0
+        for obj in self.job:
+            obj.render()
+            loading.text = "loading (" + str(i) + "/" + str(len(self.job))+")"
+            i+=1
+        
+                  
+
                 
 
 c.lights = []
 test = Data()
 dtest = test.data
 s = Sensor(dtest)
-s.xtransparency=0
-s.ytransparency=0
+s.xtransparency=1
+s.ytransparency=1
 s.xstart = 'down'
 s.ystart = 'down'
 
+data = Data().data
+loading = label(pos = vector(0,0,0), text = "loading", height = 100)
 s.render()
-
-s.shafts[0]["x"][0].surfaces[0].opacity = 1
-#for surface in s.shafts[0]['x'][0].surfaces:
-    #surface.color = vec(255,255,255)
+loading.visible = False
         
+
+
 #60 and 100 cm long
 #x is long and y is short
 #triangles have width 4cm and 2cm high
+def clear(highlighted):
+    for obj in highlighted: 
+        obj.prism.opacity = 0
+        obj.prism.color = color.white
+
+clear(s.job)
+
+
+def load_event(event):
+    for obj in s.job: 
+        obj.prism.opacity = 0
+        obj.prism.color = color.white
+
+    k = 0
+    for layer in event:
+        i = 0
+        for lg in layer:
+            
+            obj = s.shafts[k]["x"][i]
+            obj.prism.opacity = lg/20
+            obj.prism.color = color.red  
+            i += 1
+        k += 1
+
+
+event_num=0
+load_event(data[0])
+counter = label(pos=vector(0,0,0), text = "Event 1", xoffset = 100, yoffset = 100)
+
+choices = []
+for choice in range(len(data)): choices.append( "Event " + str(choice+1))
+def M(m):
+    load_event(data[m.index])
+    counter.text = "Event " + str(m.index+1)
+menu( choices=choices, bind=M )
+c.append_to_caption('\n\n')
+
 while True:
+    k = keysdown()
+    if "right" in k:
+        #print(event_num)
+        if event_num < len(data)-1: 
+            event_num += 1
+            counter.text = "Event " + str(event_num+1)
+        load_event(data[event_num])
+    if "left" in k:
+        #print(event_num)
+        if event_num > 0: 
+            event_num -= 1
+            counter.text = "Event " + str(event_num+1)
+        load_event(data[event_num])
+
     rate(100)
+    

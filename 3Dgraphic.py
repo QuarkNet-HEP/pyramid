@@ -229,7 +229,7 @@ def load_event(event):
         for lg in layer:
             
             obj = s.shafts[k]["x"][i]
-            obj.prism.opacity = lg/20
+            obj.prism.opacity = lg/500
             obj.prism.color = color.red  
             i += 1
         k += 1
@@ -254,13 +254,13 @@ while True:
         if event_num < len(data)-1: 
             event_num += 1
             counter.text = "Event " + str(event_num+1)
-        load_event(data[event_num])
+            load_event(data[event_num])
     if "left" in k:
         #print(event_num)
         if event_num > 0: 
             event_num -= 1
             counter.text = "Event " + str(event_num+1)
-        load_event(data[event_num])
+            load_event(data[event_num])
 
     rate(100)
     

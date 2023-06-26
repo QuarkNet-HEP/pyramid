@@ -1,5 +1,5 @@
 import pandas as pd
-df = pd.read_csv('pyramid/newData.txt', sep = '\s+', engine = 'python', skiprows = 15)
+df = pd.read_csv('pyramid/big.txt', sep = '\s+', engine = 'python', skiprows = 15)
 df = df.T
 #print(df)
 #print("swap:")
